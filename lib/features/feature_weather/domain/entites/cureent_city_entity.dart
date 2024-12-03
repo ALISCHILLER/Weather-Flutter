@@ -1,7 +1,7 @@
 
 import 'package:equatable/equatable.dart';
 
-import '../../data/models/CurrentCityModel.dart';
+import '../../data/models/current_city_model.dart';
 
 class CurrentCityEntity extends Equatable {
   Coord? coord;

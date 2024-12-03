@@ -1,4 +1,4 @@
-import '../../domain/entites/CureentCityEntity.dart';
+import '../../domain/entites/cureent_city_entity.dart';
 
 /// coord : {"lon":7.367,"lat":45.133}
 /// weather : [{"id":501,"main":"Rain","description":"moderate rain","icon":"10d"}]
