@@ -117,18 +117,18 @@ class Sys {
     sunset = json['sunset'];
   }
 
-  int? type;
-  int? id;
+  num? type;
+  num? id;
   String? country;
-  int? sunrise;
-  int? sunset;
+  num? sunrise;
+  num? sunset;
 
   Sys copyWith({
-    int? type,
-    int? id,
+    num? type,
+    num? id,
     String? country,
-    int? sunrise,
-    int? sunset,
+    num? sunrise,
+    num? sunset,
   }) =>
       Sys(
         type: type ?? this.type,
@@ -160,10 +160,10 @@ class Clouds {
     all = json['all'];
   }
 
-  int? all;
+  num? all;
 
   Clouds copyWith({
-    int? all,
+    num? all,
   }) =>
       Clouds(
         all: all ?? this.all,
@@ -187,10 +187,10 @@ class Rain {
     h = json['1h'];
   }
 
-  double? h;
+  num? h;
 
   Rain copyWith({
-    double? h,
+    num? h,
   }) =>
       Rain(
         h: h ?? this.h,
@@ -220,14 +220,14 @@ class Wind {
     gust = json['gust'];
   }
 
-  double? speed;
-  int? deg;
-  double? gust;
+  num? speed;
+  num? deg;
+  num? gust;
 
   Wind copyWith({
-    double? speed,
-    int? deg,
-    double? gust,
+    num? speed,
+    num? deg,
+    num? gust,
   }) =>
       Wind(
         speed: speed ?? this.speed,
@@ -276,24 +276,24 @@ class Main {
     grndLevel = json['grnd_level'];
   }
 
-  double? temp;
-  double? feelsLike;
-  double? tempMin;
-  double? tempMax;
-  int? pressure;
-  int? humidity;
-  int? seaLevel;
-  int? grndLevel;
+  num? temp;
+  num? feelsLike;
+  num? tempMin;
+  num? tempMax;
+  num? pressure;
+  num? humidity;
+  num? seaLevel;
+  num? grndLevel;
 
   Main copyWith({
-    double? temp,
-    double? feelsLike,
-    double? tempMin,
-    double? tempMax,
-    int? pressure,
-    int? humidity,
-    int? seaLevel,
-    int? grndLevel,
+    num? temp,
+    num? feelsLike,
+    num? tempMin,
+    num? tempMax,
+    num? pressure,
+    num? humidity,
+    num? seaLevel,
+    num? grndLevel,
   }) =>
       Main(
         temp: temp ?? this.temp,
@@ -340,13 +340,13 @@ class Weather {
     icon = json['icon'];
   }
 
-  int? id;
+  num? id;
   String? main;
   String? description;
   String? icon;
 
   Weather copyWith({
-    int? id,
+    num? id,
     String? main,
     String? description,
     String? icon,
@@ -382,12 +382,12 @@ class Coord {
     lat = json['lat'];
   }
 
-  double? lon;
-  double? lat;
+  num? lon;
+  num? lat;
 
   Coord copyWith({
-    double? lon,
-    double? lat,
+    num? lon,
+    num? lat,
   }) =>
       Coord(
         lon: lon ?? this.lon,
