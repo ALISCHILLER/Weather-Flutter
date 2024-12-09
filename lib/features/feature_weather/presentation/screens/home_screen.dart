@@ -8,21 +8,21 @@ import '../bloc/cw_status.dart';
 import '../bloc/home_bloc.dart';
 
 /// صفحه اصلی اپلیکیشن (HomeScreen)
-/// مدیریت وضعیت‌های آب‌وهوا و نمایش اطلاعات مربوطه
+/// این صفحه به مدیریت وضعیت‌های مختلف آب‌وهوا و نمایش اطلاعات مربوط به وضعیت آب‌وهوا برای شهرها می‌پردازد.
 class HomeScreen extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  /// نام پیش‌فرض شهر
+  /// نام پیش‌فرض شهر (در اینجا تهران)
   String cityName = "Tehran";
   final PageController _pageController = PageController();
 
   @override
   void initState() {
     super.initState();
-    // ارسال رویداد برای بارگذاری اطلاعات آب‌وهوا برای شهر پیش‌فرض
+    // ارسال رویداد برای بارگذاری اطلاعات آب‌وهوا برای شهر پیش‌فرض (تهران)
     BlocProvider.of<HomeBloc>(context).add(LoadCwEvent(cityName));
   }
 
@@ -34,12 +34,12 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           BlocBuilder<HomeBloc, HomeState>(
             builder: (context, state) {
-              // بررسی وضعیت بارگذاری
+              // بررسی وضعیت بارگذاری اطلاعات آب‌وهوا
               if (state.cwStatus is CwLoading) {
                 return const Expanded(child: DotLoadingWidget());
               }
 
-              // بررسی وضعیت موفقیت‌آمیز
+              // بررسی وضعیت موفقیت‌آمیز بارگذاری اطلاعات
               if (state.cwStatus is CwCompleted) {
                 final CwCompleted cwCompleted = state.cwStatus as CwCompleted;
                 final CurrentCityEntity currentCityEntity =
@@ -52,17 +52,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 return Expanded(
                   child: ListView(
                     children: [
-                      _buildWeatherInfo(currentCityEntity, condition),
+                      _buildWeatherInfo(currentCityEntity, condition),  // نمایش اطلاعات وضعیت آب‌وهوا
                       const SizedBox(height: 10),
                       Center(
                         child: SmoothPageIndicator(
                           controller: _pageController,
-                          count: 2,
+                          count: 2, // تعداد صفحات برای نمایش در PageView
                           effect: const ExpandingDotsEffect(
                             dotWidth: 10,
                             dotHeight: 10,
                             spacing: 5,
-                            activeDotColor: Colors.white,
+                            activeDotColor: Colors.white, // رنگ نقطه فعال
                           ),
                           onDotClicked: (index) => _pageController.animateToPage(
                             index,
@@ -76,13 +76,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }
 
-              // بررسی وضعیت خطا
+              // بررسی وضعیت خطا در بارگذاری اطلاعات آب‌وهوا
               if (state.cwStatus is CwError) {
                 final CwError cwError = state.cwStatus as CwError;
-                return _buildStatusWidget("خطا رخ داده است: ${cwError.message}",Colors.red);
+                return _buildStatusWidget("خطا رخ داده است: ${cwError.message}", Colors.red);
               }
 
-              // وضعیت پیش‌فرض (عدم نمایش چیزی)
+              // وضعیت پیش ‌فرض: زمانی که هیچ چیز برای نمایش وجود ندارد
               return const SizedBox();
             },
           ),
@@ -100,17 +100,17 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: EdgeInsets.only(top: height * 0.02),
       child: SizedBox(
         width: width,
-        height: 400,
+        height: 400, // ارتفاع ثابت برای نمایش وضعیت آب‌وهوا
         child: PageView.builder(
           physics: const AlwaysScrollableScrollPhysics(),
           allowImplicitScrolling: true,
           controller: _pageController,
-          itemCount: 2,
+          itemCount: 2, // تعداد صفحات
           itemBuilder: (context, position) {
             if (position == 0) {
-              return _buildWeatherDetails(currentCityEntity, condition);
+              return _buildWeatherDetails(currentCityEntity, condition); // نمایش اطلاعات آب‌وهوا
             } else {
-              return Container(color: Colors.amber);
+              return Container(color: Colors.amber); // صفحه دوم
             }
           },
         ),
@@ -118,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// ویجت برای نمایش اطلاعات دما و وضعیت هوا
+  /// ویجت برای نمایش جزئیات آب‌وهوا (شامل نام شهر، وضعیت و دما)
   Widget _buildWeatherDetails(CurrentCityEntity currentCityEntity, WeatherCondition condition) {
     return Column(
       children: [
@@ -138,17 +138,17 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Padding(
           padding: EdgeInsets.only(top: 20),
-          child: AppBackground.getWeatherIcon(condition),
+          child: AppBackground.getWeatherIcon(condition),  // نمایش آیکون وضعیت آب‌وهوا
         ),
         Padding(
           padding: const EdgeInsets.only(top: 20),
           child: Text(
-            "${currentCityEntity.main!.temp?.round()}\u00b0",
+            "${currentCityEntity.main!.temp?.round()}\u00b0", // نمایش دمای کنونی
             style: _buildTextStyle(fontSize: 25, fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(height: 20),
-        _buildTemperatureInfo(currentCityEntity),
+        _buildTemperatureInfo(currentCityEntity), // نمایش دمای حداقل و حداکثر
       ],
     );
   }
@@ -158,41 +158,41 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildTempColumn("max", currentCityEntity.main!.tempMax),
+        _buildTempColumn("max", currentCityEntity.main!.tempMax), // دمای حداکثر
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 10),
           child: Divider(color: Colors.grey, height: 40, thickness: 2),
         ),
-        _buildTempColumn("min", currentCityEntity.main!.tempMin),
+        _buildTempColumn("min", currentCityEntity.main!.tempMin), // دمای حداقل
       ],
     );
   }
 
-  /// ویجت برای نمایش دما
+  /// ویجت برای نمایش دما با استفاده از برچسب (max یا min)
   Widget _buildTempColumn(String label, num? temperature) {
     return Column(
       children: [
         Text(label, style: _buildTextStyle(fontSize: 15)),
         const SizedBox(height: 10),
         Text(
-          "${temperature?.round()}\u00b0",
+          "${temperature?.round()}\u00b0", // نمایش دما به فارنهایت یا سلسیوس
           style: _buildTextStyle(fontSize: 16),
         ),
       ],
     );
   }
 
-  /// متد برای ساخت استایل متن
+  /// متد برای ساخت استایل متن (فونت و اندازه)
   TextStyle _buildTextStyle({required double fontSize, FontWeight fontWeight = FontWeight.normal}) {
     return TextStyle(
       fontSize: fontSize,
       fontWeight: fontWeight,
-      color: Colors.white,
+      color: Colors.white, // رنگ متن سفید
     );
   }
 
   /// متد برای نمایش ویجت وضعیت‌ها (مانند پیام خطا)
-  Widget _buildStatusWidget(String message,Color color) {
+  Widget _buildStatusWidget(String message, Color color) {
     return Center(
       child: Text(
         message,
