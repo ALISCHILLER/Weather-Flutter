@@ -3,6 +3,7 @@ import 'package:meta/meta.dart';
 import 'package:weather_flutter/core/resources/data_state.dart';
 import 'package:weather_flutter/features/feature_weather/domain/use_cases/get_current_weather_usecase.dart';
 import 'package:weather_flutter/features/feature_weather/presentation/bloc/cw_status.dart';
+import 'package:weather_flutter/features/feature_weather/presentation/bloc/fw_status.dart';
 
 part 'home_event.dart'; // بخش تعریف شده برای رویدادها
 part 'home_state.dart'; // بخش تعریف شده برای وضعیت‌ها
@@ -16,7 +17,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   /// سازنده `HomeBloc`
   /// مقدار اولیه وضعیت صفحه را به `CwLoading` تنظیم می‌کند.
   HomeBloc(this.getCurrentWeatherUseCase)
-      : super(HomeState(cwStatus: CwLoading())) {
+      : super(HomeState(cwStatus: CwLoading(), fwStatus: FwLoading())) {
     /// هندلر برای رویداد `LoadCwEvent`
     /// وظیفه این هندلر، لود کردن وضعیت آب و هوا برای یک شهر مشخص است.
     on<LoadCwEvent>((event, emit) async {

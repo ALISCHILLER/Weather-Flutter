@@ -7,19 +7,22 @@ part of 'home_bloc.dart';
 class HomeState {
   /// وضعیت فعلی آب و هوا.
   final CwStatus cwStatus;
+  final FwStatus fwStatus;
 
   /// سازنده کلاس `HomeState`.
   /// این سازنده مقدار اولیه وضعیت را می‌گیرد.
-  HomeState({required this.cwStatus});
+  HomeState({required this.cwStatus, required this.fwStatus});
 
   /// متد `copyWith` برای ایجاد نسخه‌ای جدید از `HomeState` با امکان تغییر مقادیر خاص.
   /// اگر مقدار جدیدی برای `newCwStatus` داده شود، جایگزین مقدار فعلی می‌شود.
   /// در غیر این صورت، مقدار فعلی حفظ می‌شود.
   HomeState copyWith({
     CwStatus? newCwStatus,
+    FwStatus? newFwStatus,
   }) {
     return HomeState(
       cwStatus: newCwStatus ?? this.cwStatus, // اگر مقدار جدید نباشد، از مقدار فعلی استفاده می‌شود.
+      fwStatus: newFwStatus ?? this.fwStatus, // اگر مقدار جدید نباشد، از مقدار فعلی استفاده می‌شود.
     );
   }
 }
