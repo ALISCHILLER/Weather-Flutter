@@ -1,36 +1,17 @@
-
-
-import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
+
 import 'package:weather_flutter/features/feature_weather/domain/entites/forcast_day_entites.dart';
 
+import '../../../../core/bloc/BaseStatus.dart';
 
-@immutable
-abstract class FwStatus extends Equatable {
+/// وضعیت‌های پیش‌بینی روزانه با استفاده از BaseStatus.
+typedef FwStatus = BaseStatus<ForecastDaysEntity>;
 
-}
+/// وضعیت بارگذاری پیش‌بینی روزانه.
+typedef FwLoading = Loading<ForecastDaysEntity>;
 
-class FwLoading extends FwStatus{
-  @override
-  // TODO: implement props
-  List<Object?> get props => throw UnimplementedError();
+/// وضعیت تکمیل پیش‌بینی روزانه.
+typedef FwCompleted = Completed<ForecastDaysEntity>;
 
-}
-/// وضعیت تکمیل.
-/// این کلاس برای زمانی که داده‌های وضعیت آب و هوا با موفقیت دریافت شده‌اند استفاده می‌شود.
-class FwCompleted extends FwStatus {
-  final ForecastDaysEntity forecastDaysEntity;
-
-  FwCompleted(this.forecastDaysEntity);
-  @override
-  // TODO: implement props
-  List<Object?> get props =>[forecastDaysEntity];
-}
-
-class FwError extends FwStatus{
-  final String message;
-  FwError(this.message);
-  @override
-  // TODO: implement props
-  List<Object?> get props => [message];
-}
+/// وضعیت خطا در پیش‌بینی روزانه.
+typedef FwError = Error<ForecastDaysEntity>;

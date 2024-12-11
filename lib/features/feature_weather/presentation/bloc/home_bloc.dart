@@ -1,41 +1,56 @@
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 import 'package:weather_flutter/core/resources/data_state.dart';
+import 'package:weather_flutter/features/feature_weather/data/models/forcast_prams.dart';
 import 'package:weather_flutter/features/feature_weather/domain/use_cases/get_current_weather_usecase.dart';
+import 'package:weather_flutter/features/feature_weather/domain/use_cases/get_forecast_day_usecase.dart';
 import 'package:weather_flutter/features/feature_weather/presentation/bloc/cw_status.dart';
 import 'package:weather_flutter/features/feature_weather/presentation/bloc/fw_status.dart';
 
-part 'home_event.dart'; // بخش تعریف شده برای رویدادها
-part 'home_state.dart'; // بخش تعریف شده برای وضعیت‌ها
+part 'home_event.dart';
+part 'home_state.dart';
 
-/// کلاس `HomeBloc`
-/// این کلاس مدیریت وضعیت صفحه خانه را بر عهده دارد و از الگوی BLoC برای مدیریت رویدادها و وضعیت‌ها استفاده می‌کند.
+/// کلاس HomeBloc برای مدیریت رویدادها و وضعیت‌ها
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
-  /// وابستگی `GetCurrentWeatherUseCase` برای دریافت اطلاعات آب و هوا
   final GetCurrentWeatherUseCase getCurrentWeatherUseCase;
+  final GetForecastDayUseCase getForecastDayUseCase;
 
-  /// سازنده `HomeBloc`
-  /// مقدار اولیه وضعیت صفحه را به `CwLoading` تنظیم می‌کند.
-  HomeBloc(this.getCurrentWeatherUseCase)
+  HomeBloc(this.getCurrentWeatherUseCase, this.getForecastDayUseCase)
       : super(HomeState(cwStatus: CwLoading(), fwStatus: FwLoading())) {
-    /// هندلر برای رویداد `LoadCwEvent`
-    /// وظیفه این هندلر، لود کردن وضعیت آب و هوا برای یک شهر مشخص است.
+    // مدیریت رویداد LoadCwEvent
     on<LoadCwEvent>((event, emit) async {
-      // ارسال وضعیت لودینگ به UI
-      emit(state.copyWith(newCwStatus: CwLoading()));
-
-      // فراخوانی UseCase برای دریافت اطلاعات آب و هوا
-      DataState dataState = await getCurrentWeatherUseCase(event.cityName);
-
-      // اگر داده‌ها با موفقیت دریافت شوند
-      if (dataState is DataSuccess) {
-        emit(state.copyWith(newCwStatus: CwCompleted(dataState.data)));
-      }
-
-      // اگر دریافت داده‌ها با خطا مواجه شود
-      if (dataState is DataFailed) {
-        emit(state.copyWith(newCwStatus: CwError(dataState.error!)));
-      }
+      await _handleWeatherEvent(
+            () => getCurrentWeatherUseCase(event.cityName),
+            (data) => emit(state.copyWith(newCwStatus: CwCompleted(data))),
+            (error) => emit(state.copyWith(newCwStatus: CwError(error))),
+            () => emit(state.copyWith(newCwStatus: CwLoading())),
+      );
     });
+
+    // مدیریت رویداد LoadFwEvent
+    on<LoadFwEvent>((event, emit) async {
+      await _handleWeatherEvent(
+            () => getForecastDayUseCase(event.forcastParams),
+            (data) => emit(state.copyWith(newFwStatus: FwCompleted(data))),
+            (error) => emit(state.copyWith(newFwStatus: FwError(error))),
+            () => emit(state.copyWith(newFwStatus: FwLoading())),
+      );
+    });
+  }
+
+  /// متد خصوصی برای مدیریت مشترک رویدادها
+  Future<void> _handleWeatherEvent<T>(
+      Future<DataState<T>> Function() fetchData,
+      void Function(T data) onSuccess,
+      void Function(String error) onError,
+      void Function() onLoading,
+      ) async {
+    onLoading(); // ارسال وضعیت لودینگ
+    DataState<T> dataState = await fetchData(); // فراخوانی داده‌ها
+    if (dataState is DataSuccess) {
+      onSuccess(dataState.data!); // موفقیت
+    } else if (dataState is DataFailed) {
+      onError(dataState.error!); // شکست
+    }
   }
 }

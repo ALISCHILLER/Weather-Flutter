@@ -16,3 +16,10 @@ class LoadCwEvent extends HomeEvent {
   /// مقدار `cityName` را دریافت می‌کند.
   LoadCwEvent(this.cityName);
 }
+
+class LoadFwEvent extends HomeEvent{
+
+  final ForcastParams forcastParams;
+
+  LoadFwEvent(this.forcastParams);
+}

@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:weather_flutter/core/widgets/app_background.dart';
 import 'package:weather_flutter/core/widgets/dot_loading_widget.dart';
+import 'package:weather_flutter/features/feature_weather/domain/entites/forcast_day_entites.dart';
+import 'package:weather_flutter/features/feature_weather/presentation/bloc/fw_status.dart';
+import '../../data/models/ForecastDaysModel.dart';
 import '../../domain/entites/cureent_city_entity.dart';
 import '../bloc/cw_status.dart';
 import '../bloc/home_bloc.dart';
@@ -33,6 +36,12 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           BlocBuilder<HomeBloc, HomeState>(
+            buildWhen: (previous, current) {
+              if (previous.cwStatus == previous.cwStatus) {
+                return false;
+              }
+              return true;
+            },
             builder: (context, state) {
               // بررسی وضعیت بارگذاری اطلاعات آب‌وهوا
               if (state.cwStatus is CwLoading) {
@@ -42,8 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // بررسی وضعیت موفقیت‌آمیز بارگذاری اطلاعات
               if (state.cwStatus is CwCompleted) {
                 final CwCompleted cwCompleted = state.cwStatus as CwCompleted;
-                final CurrentCityEntity currentCityEntity =
-                    cwCompleted.currentCityEntity;
+                final CurrentCityEntity currentCityEntity = cwCompleted.data;
 
                 // دریافت وضعیت آب‌وهوا به صورت Enum
                 WeatherCondition condition = AppBackground.getWeatherCondition(
@@ -52,7 +60,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 return Expanded(
                   child: ListView(
                     children: [
-                      _buildWeatherInfo(currentCityEntity, condition),  // نمایش اطلاعات وضعیت آب‌وهوا
+                      _buildWeatherInfo(currentCityEntity, condition),
+                      // نمایش اطلاعات وضعیت آب‌وهوا
                       const SizedBox(height: 10),
                       Center(
                         child: SmoothPageIndicator(
@@ -64,13 +73,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             spacing: 5,
                             activeDotColor: Colors.white, // رنگ نقطه فعال
                           ),
-                          onDotClicked: (index) => _pageController.animateToPage(
+                          onDotClicked: (index) =>
+                              _pageController.animateToPage(
                             index,
                             duration: const Duration(microseconds: 500),
                             curve: Curves.bounceInOut,
                           ),
                         ),
-                      )
+                      ),
+                      _buidWeathers7Days(),
                     ],
                   ),
                 );
@@ -79,7 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
               // بررسی وضعیت خطا در بارگذاری اطلاعات آب‌وهوا
               if (state.cwStatus is CwError) {
                 final CwError cwError = state.cwStatus as CwError;
-                return _buildStatusWidget("خطا رخ داده است: ${cwError.message}", Colors.red);
+                return _buildStatusWidget(
+                    "خطا رخ داده است: ${cwError.message}", Colors.red);
               }
 
               // وضعیت پیش ‌فرض: زمانی که هیچ چیز برای نمایش وجود ندارد
@@ -92,7 +104,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// متد برای ساخت نمایش وضعیت آب‌وهوا
-  Widget _buildWeatherInfo(CurrentCityEntity currentCityEntity, WeatherCondition condition) {
+  Widget _buildWeatherInfo(
+      CurrentCityEntity currentCityEntity, WeatherCondition condition) {
     var height = MediaQuery.of(context).size.height;
     var width = MediaQuery.of(context).size.width;
 
@@ -105,10 +118,12 @@ class _HomeScreenState extends State<HomeScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           allowImplicitScrolling: true,
           controller: _pageController,
-          itemCount: 2, // تعداد صفحات
+          itemCount: 2,
+          // تعداد صفحات
           itemBuilder: (context, position) {
             if (position == 0) {
-              return _buildWeatherDetails(currentCityEntity, condition); // نمایش اطلاعات آب‌وهوا
+              return _buildWeatherDetails(
+                  currentCityEntity, condition); // نمایش اطلاعات آب‌وهوا
             } else {
               return Container(color: Colors.amber); // صفحه دوم
             }
@@ -118,8 +133,78 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buidWeathers7Days() {
+    var height = MediaQuery.of(context).size.height;
+    var width = MediaQuery.of(context).size.width;
+    return Padding(
+      padding: EdgeInsets.only(top: height * 0.02),
+      child: SizedBox(
+        width: width,
+        height: 100,
+        child: Padding(
+          padding: EdgeInsets.only(left: 10.0),
+          child: Center(
+            child: BlocBuilder<HomeBloc, HomeState>(
+                builder: (BuildContext context, state) {
+              if (state.fwStatus is FwLoading) {
+                return const Expanded(child: DotLoadingWidget());
+              }
+
+              if (state.fwStatus is FwCompleted) {
+                final FwCompleted fwCompleted = state.fwStatus as FwCompleted;
+                final ForecastDaysEntity forecastDaysEntity = fwCompleted.data;
+                final List<Daily> mainDaily = forecastDaysEntity.daily!;
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 8,
+                  itemBuilder: (
+                    BuildContext context,
+                    int index,
+                  ) {
+                    return DaysWeatherView(mainDaily[index],);
+                  },
+                );
+              }
+              // بررسی وضعیت خطا در بارگذاری اطلاعات آب‌وهوا
+              if (state.fwStatus is FwError) {
+                final FwError fwError = state.fwStatus as FwError;
+                return _buildStatusWidget(
+                    "خطا رخ داده است: ${fwError.message}", Colors.red);
+              }
+              // وضعیت پیش ‌فرض: زمانی که هیچ چیز برای نمایش وجود ندارد
+              return const SizedBox();
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget DaysWeatherView(Daily daily) {
+    WeatherCondition condition =
+        AppBackground.getWeatherCondition(daily.weather?[0].description ?? '');
+    return Column(
+      children: [
+        Text(
+          daily.dt.toString(),
+          style: TextStyle(
+              color: Colors.white, fontSize: 16, fontStyle: FontStyle.normal),
+        ),
+        AppBackground.getWeatherIcon(condition),
+        Text("${daily.temp!.day!.round()} \u00B0",
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontStyle: FontStyle.normal)),
+      ],
+    );
+  }
+
   /// ویجت برای نمایش جزئیات آب‌وهوا (شامل نام شهر، وضعیت و دما)
-  Widget _buildWeatherDetails(CurrentCityEntity currentCityEntity, WeatherCondition condition) {
+  Widget _buildWeatherDetails(
+      CurrentCityEntity currentCityEntity, WeatherCondition condition) {
     return Column(
       children: [
         Padding(
@@ -138,12 +223,14 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Padding(
           padding: EdgeInsets.only(top: 20),
-          child: AppBackground.getWeatherIcon(condition),  // نمایش آیکون وضعیت آب‌وهوا
+          child: AppBackground.getWeatherIcon(
+              condition), // نمایش آیکون وضعیت آب‌وهوا
         ),
         Padding(
           padding: const EdgeInsets.only(top: 20),
           child: Text(
-            "${currentCityEntity.main!.temp?.round()}\u00b0", // نمایش دمای کنونی
+            "${currentCityEntity.main!.temp?.round()}\u00b0",
+            // نمایش دمای کنونی
             style: _buildTextStyle(fontSize: 25, fontWeight: FontWeight.bold),
           ),
         ),
@@ -183,7 +270,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// متد برای ساخت استایل متن (فونت و اندازه)
-  TextStyle _buildTextStyle({required double fontSize, FontWeight fontWeight = FontWeight.normal}) {
+  TextStyle _buildTextStyle(
+      {required double fontSize, FontWeight fontWeight = FontWeight.normal}) {
     return TextStyle(
       fontSize: fontSize,
       fontWeight: fontWeight,
