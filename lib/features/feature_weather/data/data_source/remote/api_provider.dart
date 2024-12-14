@@ -1,66 +1,113 @@
-import 'package:ansicolor/ansicolor.dart';
 import 'package:dio/dio.dart';
+import 'package:logger/logger.dart';
 import 'package:weather_flutter/core/utils/constants.dart';
+import 'package:weather_flutter/core/widgets/logger_manager.dart';
 import 'package:weather_flutter/features/feature_weather/data/models/forcast_prams.dart';
 
+/// کلاس مدیریت ارتباطات API
+/// این کلاس درخواست‌ها و پاسخ‌های API را مدیریت می‌کند،
+/// لاگ‌های مربوطه را ثبت می‌کند و در صورت بروز خطا، آن‌ها را مدیریت می‌نماید.
 class ApiProvider {
-  // ایجاد یک نمونه از Dio برای مدیریت درخواست‌های HTTP
-  final Dio _dio = Dio();
+  // نمونه ثابت از Dio برای مدیریت درخواست‌های HTTP
+  final  Dio _dio = Dio();
 
-  // کلید API که از فایل Constants دریافت می‌شود
-  var apikey = Constants.apikey;
+  /// Logger برای ثبت لاگ‌ها.
+  final Logger logger = Logger();
 
-  /// متد برای فراخوانی API وضعیت آب و هوای فعلی
-  /// [cityName] نام شهری که اطلاعات وضعیت آب و هوا برای آن دریافت می‌شود
-  Future<Response> callCurrentWeather(String cityName) async {
-    try {
-      // ارسال درخواست GET به URL مشخص‌شده
-      var response = await _dio.get(
-        '${Constants.baseUrl}/data/2.5/weather',
-        queryParameters: {
-          'q': cityName, // نام شهر
-          'appid': apikey, // کلید API
-          'units': 'metric' // واحد اندازه‌گیری دما (سلسیوس)
-        },
-      );
-      var pen = AnsiPen()..green();
-      // چاپ داده‌های دریافتی در کنسول برای دیباگ با رنگ سبز
-      print(pen('Response data: ${response.data}'));
+  // کلید API برای احراز هویت درخواست‌ها
+  final String apikey = Constants.apikey;
 
-      // بازگشت پاسخ از API
-      return response;
-    } catch (e) {
-      // مدیریت خطاها در صورت بروز مشکل در درخواست
-      var penError = AnsiPen()..red(); // رنگ قرمز برای خطا
-      print(penError('API Error: $e'));
 
-      rethrow; // پرتاب مجدد خطا به خارج از متد
+
+  /// متد ثبت لاگ برای درخواست‌های API
+  /// [endpoint]: آدرس انتهایی درخواست
+  /// [queryParams]: پارامترهای ارسالی به سرور
+  void _logRequest(String endpoint, Map<String, dynamic>? queryParams) {
+    logger.d('API Request - Endpoint: $endpoint, Params: $queryParams');
+  }
+
+  /// متد ثبت لاگ برای پاسخ‌های API
+  /// [response]: پاسخ دریافتی از سرور
+  void _logResponse(Response response) {
+    logger.i(
+        'API Response - Status: ${response.statusCode}, Data: ${response.data}');
+  }
+
+  /// متد ثبت لاگ برای خطاهای API
+  /// [error]: خطای رخ داده در هنگام ارسال درخواست
+  void _logError(dynamic error) {
+    if (error is DioException) {
+      // خطاهای خاص Dio را مدیریت می‌کند
+      logger.e(
+          'API Error - Message: ${error.message}, Response: ${error.response?.data}');
+    } else {
+      // سایر خطاها
+      logger.e('Unexpected Error: $error');
     }
   }
 
-  Future<Response> sendRequest7DayForcast(ForcastParams params) async {
+  /// متد برای دریافت وضعیت آب و هوای فعلی
+  /// [cityName]: نام شهر مورد نظر برای دریافت اطلاعات آب و هوا
+  /// بازگشت: پاسخ دریافت شده از API به صورت [Response]
+  Future<Response> callCurrentWeather(String cityName) async {
+    const String endpoint = '/data/2.5/weather'; // مسیر API برای وضعیت فعلی هوا
+    final queryParams = {
+      'q': cityName, // نام شهر
+      'appid': apikey, // کلید API
+      'units': 'metric', // واحد اندازه‌گیری دما (سلسیوس)
+    };
+
+    // ثبت لاگ درخواست
+    _logRequest(endpoint, queryParams);
+
     try {
-      var response = await _dio
-          .get('${Constants.baseUrl}/data/2.5/onecall', queryParameters: {
-        'lat': params.lat,
-        'lon': params.lon,
-        'exclude': 'minutely,hourly',
-        'appid': apikey,
-        'units': 'metric'
-      });
+      // ارسال درخواست به سرور
+      final response = await _dio.get(
+        '${Constants.baseUrl}$endpoint',
+        queryParameters: queryParams,
+      );
 
-      var pen = AnsiPen()..green();
-      // چاپ داده‌های دریافتی در کنسول برای دیباگ با رنگ سبز
-      print(pen('Response data: ${response.data}'));
+      // ثبت لاگ پاسخ
+      _logResponse(response);
 
-      // بازگشت پاسخ از API
       return response;
     } catch (e) {
-      // مدیریت خطاها در صورت بروز مشکل در درخواست
-      var penError = AnsiPen()..red(); // رنگ قرمز برای خطا
-      print(penError('API Error: $e'));
+      // ثبت لاگ خطا
+      _logError(e);
+      rethrow; // پرتاب مجدد خطا برای مدیریت در سطوح بالاتر
+    }
+  }
 
-      rethrow; // پرتاب مجدد خطا به خارج از متد
+  /// متد برای دریافت پیش‌بینی ۷ روزه آب و هوا
+  /// [params]: پارامترهای عرض و طول جغرافیایی
+  /// بازگشت: پاسخ دریافت شده از API به صورت [Response]
+  Future<Response> sendRequest7DayForecast(ForcastParams params) async {
+    const String endpoint =
+        '/data/2.5/forecast'; // مسیر API برای پیش‌بینی ۷ روزه هوا
+    final queryParams = {
+      'lat': params.lat, // عرض جغرافیایی
+      'lon': params.lon, // طول جغرافیایی
+      'appid': apikey, // کلید API
+    };
+
+    // ثبت لاگ درخواست
+    _logRequest(endpoint, queryParams);
+
+    try {
+      // ارسال درخواست به سرور
+      final response = await _dio.get(
+        '${Constants.baseUrl}$endpoint',
+        queryParameters: queryParams,
+      );
+
+      // ثبت لاگ پاسخ
+      _logResponse(response);
+
+      return response;
+    } catch (e) {
+      // ثبت لاگ خطا
+      _logError(e);
+      rethrow; // پرتاب مجدد خطا برای مدیریت در سطوح بالاتر
     }
   }
 }

@@ -27,18 +27,26 @@ class GetCurrentWeatherUseCase
   @override
   Future<DataState<CurrentCityEntity>> call(String cityName) async {
     try {
+      // ثبت درخواست برای دریافت وضعیت آب و هوا
       logger.i('Fetching weather data for city: $cityName');
+
       // فراخوانی متد fetchCurrentWeatherData برای دریافت داده‌های وضعیت آب و هوا.
-      return await weatherRepository.fetchCurrentWeatherData(cityName);
+      final result = await weatherRepository.fetchCurrentWeatherData(cityName);
+
+      // ثبت موفقیت در دریافت داده‌ها
+      logger.i('Successfully fetched weather data for city: $cityName');
+      return result;
     } catch (e) {
       // مدیریت خطا و ارسال آن به متد onError.
-      logger.e('Error occurred while fetching weather data', error: e);
+      logger.e('Error occurred while fetching weather data for city: $cityName', error: e);
+
       if (e is Exception) {
         await onError(e);
       } else {
         await onError(Exception('Unknown error occurred'));
       }
-      // پرتاب مجدد خطا به بیرون.
+
+      // پرتاب مجدد خطا به بیرون برای مدیریت بیشتر در جاهای دیگر
       rethrow;
     }
   }
@@ -46,8 +54,9 @@ class GetCurrentWeatherUseCase
   /// متدی برای مدیریت خطاهایی که در حین اجرای عملیات رخ می‌دهند.
   @override
   Future<void> onError(Exception e) async {
-    // بررسی نوع خطا و مدیریت آن.
+    // بررسی نوع خطا و مدیریت آن
     if (e is DioException) {
+      // مدیریت خطاهای Dio (مثلاً مشکلات شبکه)
       logger.w('Dio Error: ${e.message}');
       if (e.response != null) {
         logger.w('Response Data: ${e.response!.data}');
@@ -55,10 +64,11 @@ class GetCurrentWeatherUseCase
         logger.w('No response received from server.');
       }
     } else {
+      // مدیریت خطاهای عمومی
       logger.e('General Error: ${e.toString()}');
     }
 
-    // پرتاب یک استثنای عمومی برای اعلام شکست عملیات.
+    // پرتاب یک استثنای عمومی برای اعلام شکست عملیات
     throw WeatherFetchException('Failed to fetch weather data.');
   }
 }
