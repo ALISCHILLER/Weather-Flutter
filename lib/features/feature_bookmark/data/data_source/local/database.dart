@@ -5,7 +5,7 @@ import 'package:sqflite/sqflite.dart' as sqflite;
 import '../../../domain/entities/city_model.dart'; // مدل City
 import 'city_dao.dart'; // DAO برای عملیات روی جدول City
 
-// کدهای تولید شده توسط Floor در این فایل قرار می‌گیرد
+part 'database.g.dart'; // کدهای تولید شده توسط Floor در این فایل قرار می‌گیرد
 
 /// کلاس پایگاه داده اصلی که از FloorDatabase ارث‌بری می‌کند.
 ///
