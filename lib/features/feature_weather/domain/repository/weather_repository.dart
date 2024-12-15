@@ -1,6 +1,8 @@
 
 import 'package:weather_flutter/core/resources/data_state.dart';
+import 'package:weather_flutter/features/feature_weather/data/models/city_info_model.dart';
 import 'package:weather_flutter/features/feature_weather/data/models/forcast_prams.dart';
+import 'package:weather_flutter/features/feature_weather/domain/entites/city_info_entity.dart';
 import 'package:weather_flutter/features/feature_weather/domain/entites/cureent_city_entity.dart';
 
 
@@ -22,4 +24,7 @@ abstract class WeatherRepository {
 
 
   Future<DataState<ForecastDayEntity>> fetchForcastWeatherData(ForcastParams params);
+
+
+  Future<DataState<CityInfoEntity>> searchCities(String cityName);
 }

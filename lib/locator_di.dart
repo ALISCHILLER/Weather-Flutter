@@ -5,6 +5,7 @@ import 'package:weather_flutter/features/feature_weather/data/repository/weather
 import 'package:weather_flutter/features/feature_weather/domain/repository/weather_repository.dart';
 import 'package:weather_flutter/features/feature_weather/domain/use_cases/get_current_weather_usecase.dart';
 import 'package:weather_flutter/features/feature_weather/domain/use_cases/get_forecast_day_usecase.dart';
+import 'package:weather_flutter/features/feature_weather/domain/use_cases/get_search_city_usecase.dart';
 import 'package:weather_flutter/features/feature_weather/presentation/bloc/home_bloc.dart';
 
 
@@ -41,6 +42,11 @@ setup() {
   // ثبت وابستگی‌ها برای UseCase
   locator.registerSingleton<GetForecastDayUseCase>(
     GetForecastDayUseCase(locator()), // تزریق Repository
+  );
+
+
+  locator.registerSingleton<GetSearchCityCase>(
+    GetSearchCityCase(locator()),
   );
 
   // ثبت وابستگی‌ها برای Bloc

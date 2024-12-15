@@ -382,12 +382,12 @@ class Coord {
     lat = json['lat'];
   }
 
-  num? lon;
-  num? lat;
+  double? lon;
+  double? lat;
 
   Coord copyWith({
-    num? lon,
-    num? lat,
+    double? lon,
+    double? lat,
   }) =>
       Coord(
         lon: lon ?? this.lon,

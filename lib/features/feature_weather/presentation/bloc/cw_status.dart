@@ -10,7 +10,17 @@ typedef CwStatus = BaseStatus<CurrentCityEntity>;
 typedef CwLoading = Loading<CurrentCityEntity>;
 
 /// وضعیت تکمیل آب‌وهوای فعلی.
-typedef CwCompleted = Completed<CurrentCityEntity>;
+/// loaded state
+class CwCompleted extends CwStatus{
+  final CurrentCityEntity currentCityEntity;
+  CwCompleted(this.currentCityEntity);
+
+  @override
+  // TODO: implement props
+  List<Object?> get props => [
+    currentCityEntity,
+  ];
+}
 
 /// وضعیت خطا در آب‌وهوای فعلی.
 typedef CwError = Error<CurrentCityEntity>;

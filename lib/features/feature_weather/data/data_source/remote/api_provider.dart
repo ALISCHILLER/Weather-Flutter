@@ -9,15 +9,20 @@ import 'package:weather_flutter/features/feature_weather/data/models/forcast_pra
 /// لاگ‌های مربوطه را ثبت می‌کند و در صورت بروز خطا، آن‌ها را مدیریت می‌نماید.
 class ApiProvider {
   // نمونه ثابت از Dio برای مدیریت درخواست‌های HTTP
-  final  Dio _dio = Dio();
+  final Dio _dio = Dio(
+    BaseOptions(
+      connectTimeout: Duration(milliseconds: 5000), // زمان اتصال (میلی‌ثانیه)
+      receiveTimeout: Duration(milliseconds: 5000), // زمان دریافت پاسخ (میلی‌ثانیه)
+      sendTimeout: Duration(milliseconds: 5000),    // زمان ارسال درخواست (میلی‌ثانیه)
+    ),
+
+  );
 
   /// Logger برای ثبت لاگ‌ها.
   final Logger logger = Logger();
 
   // کلید API برای احراز هویت درخواست‌ها
   final String apikey = Constants.apikey;
-
-
 
   /// متد ثبت لاگ برای درخواست‌های API
   /// [endpoint]: آدرس انتهایی درخواست
@@ -87,7 +92,8 @@ class ApiProvider {
     final queryParams = {
       'lat': params.lat, // عرض جغرافیایی
       'lon': params.lon, // طول جغرافیایی
-      'appid': apikey, // کلید API
+      'appid': apikey, // کلید API]
+      'units': 'metric', // واحد اندازه‌گیری دما (سلسیوس)
     };
 
     // ثبت لاگ درخواست
@@ -108,6 +114,37 @@ class ApiProvider {
       // ثبت لاگ خطا
       _logError(e);
       rethrow; // پرتاب مجدد خطا برای مدیریت در سطوح بالاتر
+    }
+  }
+
+  /// این تابع درخواست جستجو برای شهرها را با استفاده از query ارسال می‌کند.
+  /// این درخواست به API برای دریافت لیستی از شهرها که با query وارد شده تطابق دارند ارسال می‌شود.
+  Future<Response> searchCities(String query) async {
+    // آدرس URL API برای جستجوی شهرها
+    const String url =
+        "http://geodb-free-service.wirefreethought.com/v1/geo/cities";
+
+    // پارامترهای جستجو برای محدود کردن نتایج
+    final queryParams = {'limit': 7, 'offset': 0, 'namePrefix': query};
+
+    // ثبت لاگ برای درخواست ارسال شده
+    _logRequest(url, queryParams);
+
+    try {
+      // ارسال درخواست به API با استفاده از Dio و دریافت پاسخ
+      final response = await _dio.get(
+        url,
+        queryParameters: queryParams,
+      );
+
+      // ثبت لاگ پاسخ دریافتی
+      _logResponse(response);
+
+      return response; // بازگشت پاسخ از API
+    } catch (e) {
+      // در صورت بروز خطا، ثبت لاگ خطا
+      _logError(e);
+      rethrow; // دوباره پرتاب خطا برای مدیریت در سطح بالاتر
     }
   }
 }

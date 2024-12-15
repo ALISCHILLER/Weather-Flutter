@@ -85,7 +85,7 @@ class Coord {
 }
 
 class Collection {
-  num? dt;
+  int? dt;
   Main? main;
   List<Weather>? weather;
   Clouds? clouds;
@@ -109,7 +109,7 @@ class Collection {
 
   factory Collection.fromJson(Map<String, dynamic> json) {
     return Collection(
-      dt: json['dt'] as num?,
+      dt: json['dt'] as int?,
       main: json['main'] != null ? Main.fromJson(json['main']) : null,
       weather: json['weather'] != null
           ? List<Weather>.from(json['weather'].map((v) => Weather.fromJson(v)))

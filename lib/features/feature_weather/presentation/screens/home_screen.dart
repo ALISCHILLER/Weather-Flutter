@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:intl/intl.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:weather_flutter/core/widgets/app_background.dart';
 import 'package:weather_flutter/core/widgets/dot_loading_widget.dart';
+import 'package:weather_flutter/features/feature_weather/data/models/city_info_model.dart';
 import 'package:weather_flutter/features/feature_weather/data/models/forcast_prams.dart';
+import 'package:weather_flutter/features/feature_weather/domain/entites/city_info_entity.dart';
+import 'package:weather_flutter/features/feature_weather/domain/use_cases/get_search_city_usecase.dart';
 import 'package:weather_flutter/features/feature_weather/presentation/bloc/fw_status.dart';
+import 'package:weather_flutter/features/feature_weather/presentation/widgets/bookmark_icon.dart';
+import 'package:weather_flutter/locator_di.dart';
+import '../../../../core/resources/data_state.dart';
+import '../../../../core/resources/data_state.dart';
+import '../../../feature_bookmark/presentation/bloc/bookmark_bloc.dart';
 import '../../data/models/forecast_day_model.dart';
 import '../../domain/entites/cureent_city_entity.dart';
 import '../../domain/entites/forecast_day_entity.dart';
@@ -22,19 +32,129 @@ class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController();
   final ForcastParams forcastParams = ForcastParams(35.7219, 51.3347);
 
+  TextEditingController textEditingController = TextEditingController();
+
+  GetSearchCityCase getSuggestionCityUseCase = GetSearchCityCase(locator());
+
   @override
   void initState() {
     super.initState();
     // ارسال رویداد برای بارگذاری اطلاعات آب‌وهوا
-    BlocProvider.of<HomeBloc>(context).add(LoadCwEvent(cityName));
-    BlocProvider.of<HomeBloc>(context).add(LoadFwEvent(forcastParams));
+ //   BlocProvider.of<HomeBloc>(context).add(LoadCwEvent(cityName));
+ //    BlocProvider.of<HomeBloc>(context).add(LoadFwEvent(forcastParams));
   }
 
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width;
     return SafeArea(
       child: Column(
         children: [
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              children: [
+                Expanded(
+                  child:
+                  TypeAheadField<Data>(
+                    builder: (context, textEditingController, focusNode) {
+                      return TextField(
+                        controller: textEditingController,
+                        focusNode: focusNode,
+                        style: DefaultTextStyle.of(context).style.copyWith(
+                          fontSize: height * 0.02,
+                          color: Colors.white,
+                        ),
+                        decoration: InputDecoration(
+                          contentPadding:
+                          EdgeInsets.fromLTRB(20, height * 0.02, 0, height * 0.02),
+                          hintText: "Enter a City...",
+                          hintStyle: TextStyle(color: Colors.white),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.white),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.white),
+                          ),
+                        ),
+                        onSubmitted: (String prefix) {
+                          BlocProvider.of<HomeBloc>(context).add(LoadCwEvent(prefix));
+                        },
+                      );
+                    },
+                    suggestionsCallback: (String prefix) async {
+                      try {
+                        final result = await getSuggestionCityUseCase(prefix);
+
+                        if (result is DataState<CityInfoEntity> && result.data?.data != null) {
+                          return result.data!.data!; // لیست شهرها
+                        }
+
+                        return <Data>[]; // بازگشت لیست خالی
+                      } catch (e) {
+                        print("Error in suggestionsCallback: $e");
+                        return <Data>[];
+                      }
+                    },
+                    itemBuilder: (context, Data city) {
+                      return ListTile(
+                        leading: const Icon(Icons.location_on),
+                        title: Text(city.name ?? 'No Name'),
+                        subtitle: Text(
+                            "${city.city ?? 'No Region'}, ${city.country ?? 'No Country'}"),
+                      );
+                    },
+                    onSelected: (Data city) {
+                      textEditingController.text = city.name ?? '';
+                      BlocProvider.of<HomeBloc>(context).add(LoadCwEvent(city.name ?? ''));
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10,),
+                /// bookmark Icon
+                BlocBuilder<HomeBloc, HomeState>(
+                  buildWhen: (previous, current){
+                    if(previous.cwStatus == current.cwStatus){
+                      return false;
+                    }
+                    return true;
+                  },
+                  builder: (context, state) {
+
+                    /// show Loading State for Cw
+                    if (state.cwStatus is CwLoading) {
+                      return const CircularProgressIndicator();
+                    }
+
+                    /// show Error State for Cw
+                    if (state.cwStatus is CwError) {
+                      return IconButton(
+                        onPressed: (){
+                          // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          //   content: Text("please load a city!"),
+                          //   behavior: SnackBarBehavior.floating, // Add this line
+                          // ));
+                        },
+                        icon: const Icon(Icons.error,color: Colors.white,size: 35),);
+                    }
+
+
+                    /// show Completed State for Cw
+                    if (state.cwStatus is CwCompleted) {
+                      final CwCompleted cwComplete = state.cwStatus as CwCompleted;
+                      BlocProvider.of<BookmarkBloc>(context).add(GetCityByNameEvent(cwComplete.currentCityEntity.name!));
+                      return BookMarkIcon(name: cwComplete.currentCityEntity.name!);
+                    }
+
+                    /// show Default value
+                    return Container();
+
+                  },
+                ),
+              ],
+            ),
+          ),
           BlocBuilder<HomeBloc, HomeState>(
             buildWhen: (previous, current) =>
                 previous.cwStatus != current.cwStatus,
@@ -45,10 +165,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
               if (state.cwStatus is CwCompleted) {
                 final CwCompleted cwCompleted = state.cwStatus as CwCompleted;
-                final CurrentCityEntity currentCityEntity = cwCompleted.data;
+                final CurrentCityEntity currentCityEntity = cwCompleted.currentCityEntity;
 
                 WeatherCondition condition = AppBackground.getWeatherCondition(
                     currentCityEntity.weather?[0].description ?? '');
+
+                BlocProvider.of<HomeBloc>(context).add(
+                  LoadFwEvent(
+                    ForcastParams(
+                      currentCityEntity.coord!.lat ?? 0.0, // مقدار پیش‌فرض 0.0
+                      currentCityEntity.coord!.lon ?? 0.0, // مقدار پیش‌فرض 0.0
+                    ),
+                  ),
+                );
+
 
                 return Expanded(
                   child: ListView(
@@ -126,45 +256,51 @@ class _HomeScreenState extends State<HomeScreen> {
     var width = MediaQuery.of(context).size.width;
 
     return Padding(
-      padding: EdgeInsets.only(top: height * 0.02),
-      child: SizedBox(
-        width: width,
-        height: 100,
-        child: BlocBuilder<HomeBloc, HomeState>(
-          builder: (BuildContext context, state) {
-            if (state.fwStatus is FwLoading) {
-              return const DotLoadingWidget();
-            }
+        padding: EdgeInsets.only(top: height * 0.02),
+        child: SizedBox(
+          width: width,
+          height: 100,
+          child: BlocBuilder<HomeBloc, HomeState>(
+            builder: (BuildContext context, state) {
+              if (state.fwStatus is FwLoading) {
+                return const DotLoadingWidget();
+              }
 
-            if (state.fwStatus is FwCompleted) {
-              final FwCompleted fwCompleted = state.fwStatus as FwCompleted;
-              final ForecastDayEntity forecastDaysEntity = fwCompleted.data;
-              final List<Collection> mainDaily = forecastDaysEntity.list!;
+              if (state.fwStatus is FwCompleted) {
+                final FwCompleted fwCompleted = state.fwStatus as FwCompleted;
+                final ForecastDayEntity forecastDaysEntity = fwCompleted.data;
+                final List<Collection> mainDaily = forecastDaysEntity.list!;
 
-              return ListView.builder(
-                shrinkWrap: true,
-                scrollDirection: Axis.horizontal,
-                itemCount: mainDaily.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return DaysWeatherView(mainDaily[index], index);
-                },
-              );
-            }
+                return ListView.builder(
+                  shrinkWrap: true,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: mainDaily.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return DaysWeatherView(mainDaily[index], index);
+                  },
+                );
+              }
 
-            if (state.fwStatus is FwError) {
-              final FwError fwError = state.fwStatus as FwError;
-              return _buildStatusWidget(
-                  "خطا رخ داده است: ${fwError.message}", Colors.red);
-            }
+              if (state.fwStatus is FwError) {
+                final FwError fwError = state.fwStatus as FwError;
+                return _buildStatusWidget(
+                    "خطا رخ داده است: ${fwError.message}", Colors.red);
+              }
 
-            return const SizedBox();
-          },
-        ),
-      ),
-    );
+              return const SizedBox();
+            },
+          ),
+        ));
   }
 
   Widget DaysWeatherView(Collection daily, int index) {
+    // تبدیل به DateTime در قالب UTC
+    // تبدیل به DateTime
+    DateTime dateTime =
+        DateTime.fromMillisecondsSinceEpoch(daily.dt! * 1000, isUtc: true);
+    // فرمت دلخواه: ماه به حروف، روز به عدد، ساعت و دقیقه
+    String formattedDate =
+        DateFormat('MMMM d, HH:mm').format(dateTime.toLocal());
     WeatherCondition condition =
         AppBackground.getWeatherCondition(daily.weather?[0].description ?? '');
     return Padding(
@@ -172,8 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // اضافه کردن فاصله از چپ و راست
       child: Column(
         children: [
-          Text(daily.weather?[0].main ?? '',
-              style: _buildTextStyle(fontSize: 16)),
+          Text("${formattedDate}", style: _buildTextStyle(fontSize: 16)),
           AppBackground.getWeatherIcon(condition),
           Text("${daily.main!.temp?.round()}\u00B0",
               style: _buildTextStyle(fontSize: 16)),

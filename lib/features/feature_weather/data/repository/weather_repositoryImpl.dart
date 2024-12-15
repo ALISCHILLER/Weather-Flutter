@@ -2,8 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:weather_flutter/core/resources/data_state.dart';
 import 'package:weather_flutter/features/feature_weather/data/data_source/remote/api_provider.dart';
+import 'package:weather_flutter/features/feature_weather/data/models/city_info_model.dart';
 import 'package:weather_flutter/features/feature_weather/data/models/current_city_model.dart';
 import 'package:weather_flutter/features/feature_weather/data/models/forcast_prams.dart';
+import 'package:weather_flutter/features/feature_weather/domain/entites/city_info_entity.dart';
 import 'package:weather_flutter/features/feature_weather/domain/entites/cureent_city_entity.dart';
 
 import '../../../../core/widgets/logger_manager.dart';
@@ -45,7 +47,7 @@ class WeatherRepositoryImpl extends WeatherRepository {
     } catch (e) {
       // مدیریت خطاهای پیش‌آمده هنگام ارسال درخواست
       if (e is DioException) {
-        logger.w("DioError: ${e.message } $T");
+        logger.w("DioError: ${e.message} $T");
         return DataFailed("DioError: ${e.message}");
       } else {
         logger.w("Unexpected Error: $e $T");
@@ -58,18 +60,26 @@ class WeatherRepositoryImpl extends WeatherRepository {
   /// [cityName]: نام شهر برای دریافت اطلاعات
   /// بازگشت: وضعیت موفقیت یا شکست همراه با داده‌ها به صورت [DataState]
   @override
-  Future<DataState<CurrentCityEntity>> fetchCurrentWeatherData(String cityName) async {
+  Future<DataState<CurrentCityEntity>> fetchCurrentWeatherData(
+      String cityName) async {
     return await fetchData<CurrentCityEntity>(
-            () => apiProvider.callCurrentWeather(cityName));
+        () => apiProvider.callCurrentWeather(cityName));
   }
 
   /// متد [fetchForcastWeatherData] برای دریافت پیش‌بینی وضعیت آب و هوای ۷ روز آینده
   /// [params]: شامل پارامترهای عرض و طول جغرافیایی
   /// بازگشت: وضعیت موفقیت یا شکست همراه با داده‌ها به صورت [DataState]
   @override
-  Future<DataState<ForecastDayEntity>> fetchForcastWeatherData(ForcastParams params) async {
+  Future<DataState<ForecastDayEntity>> fetchForcastWeatherData(
+      ForcastParams params) async {
     return await fetchData<ForecastDayEntity>(
-            () => apiProvider.sendRequest7DayForecast(params));
+        () => apiProvider.sendRequest7DayForecast(params));
+  }
+
+  @override
+  Future<DataState<CityInfoEntity>> searchCities(String cityName) async {
+    return await fetchData<CityInfoEntity>(
+        () => apiProvider.searchCities(cityName));
   }
 
   /// متد [fromJson] برای تبدیل داده‌های JSON به مدل مربوطه
@@ -80,7 +90,10 @@ class WeatherRepositoryImpl extends WeatherRepository {
       return CurrentCityModel.fromJson(json) as T;
     } else if (T == ForecastDayEntity) {
       return ForecastDayModel.fromJson(json) as T;
+    } else if (T == CityInfoEntity) {
+      return CityInfoModel.fromJson(json) as T;
     }
-    throw Exception('Unknown model type: $T'); // مدیریت خطا در صورت نوع ناشناخته
+    throw Exception(
+        'Unknown model type: $T'); // مدیریت خطا در صورت نوع ناشناخته
   }
 }

@@ -21,7 +21,7 @@ class MainWrapper extends StatelessWidget {
     // لیستی از صفحات برای نمایش در PageView
     List<Widget> pageViewWidget = [
       HomeScreen(), // صفحه اصلی
-      BookMarkScreen(), // صفحه نشان‌شده‌ها
+      BookMarkScreen(pageController: pageController), // صفحه نشان‌شده‌ها
     ];
 
     // دریافت ارتفاع دستگاه
@@ -53,59 +53,3 @@ class MainWrapper extends StatelessWidget {
   }
 }
 
-// بخش کامنت‌شده که می‌تواند در نسخه‌های توسعه‌یافته استفاده شود
-// این بخش به نمایش وضعیت داده‌های هواشناسی و مدیریت حالت‌های مختلف می‌پردازد
-// class _MainWrapperState extends State<MainWrapper> {
-//   @override
-//   void initState() {
-//     super.initState();
-//
-//     // درخواست داده وضعیت هوا برای شهر تهران
-//     BlocProvider.of<HomeBloc>(context).add(LoadCwEvent("Tehran"));
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text("Weather App"), // عنوان اپلیکیشن
-//       ),
-//       body: BlocBuilder<HomeBloc, HomeState>(
-//         builder: (context, state) {
-//           // بررسی وضعیت مختلف و نمایش ویجت مناسب
-//           if (state.cwStatus is CwLoading) {
-//             return _buildStatusWidget("Loading...");
-//           }
-//
-//           if (state.cwStatus is CwCompleted) {
-//
-//
-//             ///cast
-//             final CwCompleted cwCompleted = state.cwStatus as CwCompleted;
-//             final CurrentCityEntity currentCityEntity = cwCompleted.currentCityEntity;
-//
-//
-//             return _buildStatusWidget("Weather data loaded successfully ${currentCityEntity.name}");
-//           }
-//
-//           /// ${state.cwStatus.message}
-//           if (state.cwStatus is CwError) {
-//
-//             final CwError cwError = state.cwStatus as CwError;
-//             final error =cwError.message.toString();
-//             return _buildStatusWidget("Error occurred: ${error}");
-//           }
-//
-//           return const SizedBox(); // در صورتی که هیچ کدام از حالت‌ها فعال نباشد
-//         },
-//       ),
-//     );
-//   }
-//
-//   // متد برای ساخت ویجت وضعیت‌ها
-//   Widget _buildStatusWidget(String message) {
-//     return Center(
-//       child: Text(message, style: const TextStyle(fontSize: 20)),
-//     );
-//   }
-// }
